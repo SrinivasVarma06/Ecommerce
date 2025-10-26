@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery Management System</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 700;
+        }
+        .tabs {
+            display: flex;
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        .tab:hover {
+            background-color: #f1f5f9;
+        }
+        .tab.active {
+            background-color: #3b82f6;
+            color: white;
+            border-bottom: 3px solid #1d4ed8;
+        }
+        .section {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .section.active {
+            display: block;
+        }
+        .section h3 {
+            margin-top: 0;
+            color: #1e293b;
+            font-size: 1.5em;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .form-row > * {
+            flex: 1;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #374151;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+        button {
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        .status {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .success { 
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #047857;
+            border-left: 4px solid #10b981;
+        }
+        .error { 
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #dc2626;
+            border-left: 4px solid #ef4444;
+        }
+        .info { 
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1d4ed8;
+            border-left: 4px solid #3b82f6;
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .status-display {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        .station-list, .journey-view {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .station-item, .journey-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #3b82f6;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .journey-stage {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .stage-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+        .stage-completed {
+            background: #10b981;
+            color: white;
+        }
+        .stage-in-progress {
+            background: #f59e0b;
+            color: white;
+        }
+        .stage-pending {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+        .progress-line {
+            width: 2px;
+            height: 40px;
+            background: #e5e7eb;
+            margin-left: 19px;
+        }
+        .progress-line.completed {
+            background: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏢 Delivery Management System</h1>
+            <p>Comprehensive logistics network with fulfillment centers, regional hubs, and local stations</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('stations')">📍 Setup Stations</div>
+            <div class="tab" onclick="showTab('agents')">👥 Manage Agents</div>
+            <div class="tab" onclick="showTab('orders')">📦 Process Orders</div>
+            <div class="tab" onclick="showTab('tracking')">🔍 Track Orders</div>
+        </div>
+
+        <!-- Station Management -->
+        <div id="stations" class="section active">
+            <h3>Delivery Station Setup</h3>
+            <div class="form-row">
+                <div>
+                    <label>Station Name</label>
+                    <input type="text" id="stationName" placeholder="e.g., Central Fulfillment Center">
+                </div>
+                <div>
+                    <label>Station Type</label>
+                    <select id="stationType">
+                        <option value="fulfillment_center">Fulfillment Center</option>
+                        <option value="regional_hub">Regional Hub</option>
+                        <option value="local_station">Local Delivery Station</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <label>Address</label>
+                    <input type="text" id="stationAddress" placeholder="Full address">
+                </div>
+                <div>
+                    <label>City</label>
+                    <input type="text" id="stationCity" placeholder="City name">
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <label>State</label>
+                    <input type="text" id="stationState" placeholder="State">
+                </div>
+                <div>
+                    <label>ZIP Code</label>
+                    <input type="text" id="stationZip" placeholder="ZIP">
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <label>Latitude</label>
+                    <input type="number" id="stationLat" placeholder="40.7128" step="any">
+                </div>
+                <div>
+                    <label>Longitude</label>
+                    <input type="number" id="stationLng" placeholder="-74.0060" step="any">
+                </div>
+            </div>
+            <button onclick="registerStation()">🏢 Register Station</button>
+            <div id="stationStatus" class="status" style="display:none;"></div>
+            
+            <div class="station-list" id="stationList">
+                <h4>Registered Stations</h4>
+                <div id="stationsDisplay">No stations registered yet.</div>
+            </div>
+        </div>
+
+        <!-- Agent Management -->
+        <div id="agents" class="section">
+            <h3>Delivery Agent Management</h3>
+            <div class="form-row">
+                <div>
+                    <label>Agent Name</label>
+                    <input type="text" id="agentName" placeholder="John Doe" value="John Doe">
+                </div>
+                <div>
+                    <label>Phone Number</label>
+                    <input type="text" id="agentPhone" placeholder="+1234567890" value="+1234567890">
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <label>Vehicle Type</label>
+                    <select id="vehicleType">
+                        <option value="motorcycle">Motorcycle</option>
+                        <option value="car">Car</option>
+                        <option value="van">Van</option>
+                        <option value="bicycle">Bicycle</option>
+                    </select>
+                </div>
+                <div>
+                    <label>License Number</label>
+                    <input type="text" id="licenseNumber" placeholder="ABC123" value="ABC123">
+                </div>
+            </div>
+            <div class="form-row">
+                <div>
+                    <label>Assigned Station</label>
+                    <select id="assignedStation">
+                        <option value="">Select Station</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="registerAgent()">👤 Register Agent</button>
+            <div id="agentStatus" class="status" style="display:none;"></div>
+
+            <!-- Agent Status Control -->
+            <h4>Agent Status Control</h4>
+            <div class="form-row">
+                <div>
+                    <button onclick="goOnline()" id="onlineBtn" class="btn-success">🟢 Go Online</button>
+                    <button onclick="goOffline()" id="offlineBtn" class="btn-danger" style="display:none;">🔴 Go Offline</button>
+                    <span id="agentStatusDisplay" class="status-display">Agent Offline</span>
+                </div>
+            </div>
+
+            <!-- Agent Location Update (Only when online and has delivery) -->
+            <div id="locationUpdateSection" style="display:none;">
+                <h4>GPS Location Simulation (Demo Only)</h4>
+                <p style="color: #666; font-size: 12px;">
+                    📱 In production, this would be automatic GPS from agent's mobile app
+                </p>
+                <div class="form-row">
+                    <div>
+                        <label>Latitude</label>
+                        <input type="number" id="agentLat" placeholder="15.4589" value="15.4589" step="any">
+                    </div>
+                    <div>
+                        <label>Longitude</label>
+                        <input type="number" id="agentLng" placeholder="75.0078" value="75.0078" step="any">
+                    </div>
+                </div>
+                <button onclick="updateAgentLocation()">📍 Update Location</button>
+                <button onclick="startAutoTracking()" id="autoTrackBtn">▶️ Start Auto Tracking</button>
+            </div>
+            <div id="locationStatus" class="status" style="display:none;"></div>
+        </div>
+
+        <!-- Order Processing -->
+        <div id="orders" class="section">
+            <h3>Order Processing</h3>
+            <div class="form-row">
+                <div>
+                    <label>Order ID</label>
+                    <input type="text" id="orderId" placeholder="Enter order ID">
+                </div>
+            </div>
+            
+            <h4>Logistics Flow</h4>
+            <button onclick="processOrder()">🏭 Process Order (Setup Journey)</button>
+            <button onclick="advanceOrderStage()">➡️ Advance to Next Stage</button>
+            <button onclick="assignLocalAgent()">👤 Assign Local Agent</button>
+            
+            <h4>Agent Operations</h4>
+            <button onclick="pickupOrder()">📦 Agent Pickup from Station</button>
+            <button onclick="startDelivery()">🚚 Start Customer Delivery</button>
+            <button onclick="completeDelivery()">✅ Complete Delivery</button>
+            
+            <div id="orderStatus" class="status" style="display:none;"></div>
+        </div>
+
+        <!-- Order Tracking -->
+        <div id="tracking" class="section">
+            <h3>Order Tracking</h3>
+            <div class="form-row">
+                <div>
+                    <label>Track Order ID</label>
+                    <input type="text" id="trackOrderId" placeholder="Enter order ID">
+                </div>
+                <div style="display: flex; align-items: end;">
+                    <button onclick="trackOrder()">🔍 Track Order</button>
+                </div>
+            </div>
+            
+            <div class="journey-view" id="trackingResults" style="display:none;">
+                <h4>Delivery Journey</h4>
+                <div id="journeyDisplay"></div>
+                
+                <h4>Agent Information</h4>
+                <div id="agentInfo"></div>
+                
+                <h4>Station Information</h4>
+                <div id="stationInfo"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let agentId = localStorage.getItem('agentId');
+        let autoTrackingInterval;
+        let stations = [];
+        
+        const API_BASE = 'http://localhost:5000/api';
+
+        // Tab Management
+        function showTab(tabName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected section and activate tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load data when switching to certain tabs
+            if (tabName === 'agents') {
+                loadStationsForAgents();
+            }
+        }
+
+        // Station Management
+        async function registerStation() {
+            const stationData = {
+                name: document.getElementById('stationName').value,
+                address: document.getElementById('stationAddress').value,
+                city: document.getElementById('stationCity').value,
+                state: document.getElementById('stationState').value,
+                zipCode: document.getElementById('stationZip').value,
+                type: document.getElementById('stationType').value,
+                coordinates: {
+                    latitude: document.getElementById('stationLat').value,
+                    longitude: document.getElementById('stationLng').value
+                }
+            };
+
+            if (!stationData.name || !stationData.city || !stationData.coordinates.latitude) {
+                showStatus('stationStatus', '❌ Please fill in required fields', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/delivery/station/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(stationData)
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('stationStatus', `✅ Station registered: ${data.station.name}`, 'success');
+                    clearStationForm();
+                    loadStations();
+                } else {
+                    showStatus('stationStatus', `❌ Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus('stationStatus', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        function clearStationForm() {
+            document.getElementById('stationName').value = '';
+            document.getElementById('stationAddress').value = '';
+            document.getElementById('stationCity').value = '';
+            document.getElementById('stationState').value = '';
+            document.getElementById('stationZip').value = '';
+            document.getElementById('stationLat').value = '';
+            document.getElementById('stationLng').value = '';
+        }
+
+        async function loadStations() {
+            try {
+                const response = await fetch(`${API_BASE}/delivery/stations`);
+                const data = await response.json();
+                
+                const display = document.getElementById('stationsDisplay');
+                if (data.stations && data.stations.length > 0) {
+                    display.innerHTML = data.stations.map(station => `
+                        <div class="station-item">
+                            <strong>${station.name}</strong> (${station.type})<br>
+                            📍 ${station.address}<br>
+                            📊 Load: ${station.currentLoad}/${station.capacity}
+                        </div>
+                    `).join('');
+                } else {
+                    display.innerHTML = '<div class="station-item">📍 No stations registered yet</div>';
+                }
+            } catch (error) {
+                const display = document.getElementById('stationsDisplay');
+                display.innerHTML = '<div class="station-item">❌ Error loading stations</div>';
+            }
+        }
+
+        function loadStationsForAgents() {
+            // Load stations into the agent assignment dropdown
+            // This would typically fetch from server
+            const select = document.getElementById('assignedStation');
+            select.innerHTML = '<option value="">Select Station</option>';
+            // Add sample stations
+            select.innerHTML += '<option value="station1">Central Fulfillment Center</option>';
+            select.innerHTML += '<option value="station2">Downtown Local Station</option>';
+        }
+
+        // Agent Management
+        async function registerAgent() {
+            const agentData = {
+                name: document.getElementById('agentName').value,
+                phone: document.getElementById('agentPhone').value,
+                vehicleType: document.getElementById('vehicleType').value,
+                licenseNumber: document.getElementById('licenseNumber').value,
+                assignedStationId: document.getElementById('assignedStation').value
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/delivery/agent/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(agentData)
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    agentId = data.agentId;
+                    localStorage.setItem('agentId', agentId);
+                    showStatus('agentStatus', `✅ Agent registered: ${data.agent.name} (Status: Offline)`, 'success');
+                } else {
+                    showStatus('agentStatus', `❌ Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus('agentStatus', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        // Agent Status Management
+        function goOnline() {
+            if (!agentId) {
+                alert('Please register an agent first!');
+                return;
+            }
+            
+            // Set initial location (agent's starting point)
+            document.getElementById('agentLat').value = '15.4589'; // Dharwad FC
+            document.getElementById('agentLng').value = '75.0078';
+            
+            // Update UI
+            document.getElementById('onlineBtn').style.display = 'none';
+            document.getElementById('offlineBtn').style.display = 'inline-block';
+            document.getElementById('agentStatusDisplay').textContent = 'Agent Online 🟢';
+            document.getElementById('agentStatusDisplay').style.background = '#d1fae5';
+            document.getElementById('agentStatusDisplay').style.color = '#047857';
+            document.getElementById('locationUpdateSection').style.display = 'block';
+            
+            showStatus('agentStatus', '✅ Agent is now ONLINE and ready for deliveries!', 'success');
+        }
+
+        function goOffline() {
+            // Update UI
+            document.getElementById('onlineBtn').style.display = 'inline-block';
+            document.getElementById('offlineBtn').style.display = 'none';
+            document.getElementById('agentStatusDisplay').textContent = 'Agent Offline 🔴';
+            document.getElementById('agentStatusDisplay').style.background = '#f3f4f6';
+            document.getElementById('agentStatusDisplay').style.color = '#6b7280';
+            document.getElementById('locationUpdateSection').style.display = 'none';
+            
+            showStatus('agentStatus', '⚠️ Agent is now OFFLINE', 'info');
+        }
+
+        async function updateAgentLocation() {
+            if (!agentId) {
+                showStatus('locationStatus', '❌ Please register as agent first', 'error');
+                return;
+            }
+
+            const latitude = document.getElementById('agentLat').value;
+            const longitude = document.getElementById('agentLng').value;
+
+            try {
+                const response = await fetch(`${API_BASE}/delivery/agent/location`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Agent-Id': agentId
+                    },
+                    body: JSON.stringify({ latitude, longitude })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('locationStatus', '✅ Location updated successfully', 'success');
+                } else {
+                    showStatus('locationStatus', `❌ Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus('locationStatus', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        function startAutoTracking() {
+            const btn = document.getElementById('autoTrackBtn');
+            
+            if (autoTrackingInterval) {
+                clearInterval(autoTrackingInterval);
+                autoTrackingInterval = null;
+                btn.innerHTML = '▶️ Start Auto Tracking';
+                showStatus('locationStatus', '🔴 Auto tracking stopped', 'info');
+                return;
+            }
+
+            if (!agentId) {
+                showStatus('locationStatus', '❌ Please register as agent first', 'error');
+                return;
+            }
+
+            autoTrackingInterval = setInterval(() => {
+                const lat = parseFloat(document.getElementById('agentLat').value);
+                const lng = parseFloat(document.getElementById('agentLng').value);
+                
+                // Simulate small movements
+                const newLat = lat + (Math.random() - 0.5) * 0.001;
+                const newLng = lng + (Math.random() - 0.5) * 0.001;
+                
+                document.getElementById('agentLat').value = newLat.toFixed(6);
+                document.getElementById('agentLng').value = newLng.toFixed(6);
+                
+                updateAgentLocation();
+            }, 10000);
+
+            btn.innerHTML = '⏹️ Stop Auto Tracking';
+            showStatus('locationStatus', '🟢 Auto tracking started (updates every 10s)', 'success');
+        }
+
+        // Order Processing
+        async function processOrder() {
+            const orderId = document.getElementById('orderId').value;
+            if (!orderId) {
+                showStatus('orderStatus', '❌ Please enter Order ID', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/delivery/process-order/${orderId}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('orderStatus', `✅ Order processing initiated. Journey has ${data.journey.stages.length} stages.`, 'success');
+                } else {
+                    showStatus('orderStatus', `❌ Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus('orderStatus', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function advanceOrderStage() {
+            const orderId = document.getElementById('orderId').value;
+            if (!orderId) {
+                showStatus('orderStatus', '❌ Please enter Order ID', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/delivery/advance-stage/${orderId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('orderStatus', `✅ Order advanced to: ${data.currentStage.stage}`, 'success');
+                } else {
+                    showStatus('orderStatus', `❌ Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus('orderStatus', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function assignLocalAgent() {
+            const orderId = document.getElementById('orderId').value;
+            if (!orderId) {
+                showStatus('orderStatus', '❌ Please enter Order ID', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/delivery/assign-local-agent/${orderId}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('orderStatus', `✅ Local agent assigned: ${data.agent.name}`, 'success');
+                } else {
+                    showStatus('orderStatus', `❌ Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus('orderStatus', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        // Agent Operations (same as before)
+        async function pickupOrder() {
+            if (!agentId) {
+                showStatus('orderStatus', '❌ Please register as agent first', 'error');
+                return;
+            }
+
+            const orderId = document.getElementById('orderId').value;
+            if (!orderId) {
+                showStatus('orderStatus', '❌ Please enter Order ID', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/delivery/pickup/${orderId}`, {
+                    method: 'PUT',
+                    headers: { 'X-Agent-Id': agentId }
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('orderStatus', '✅ Order picked up from station', 'success');
+                } else {
+                    showStatus('orderStatus', `❌ Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus('orderStatus', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function startDelivery() {
+            if (!agentId) {
+                showStatus('orderStatus', '❌ Please register as agent first', 'error');
+                return;
+            }
+
+            const orderId = document.getElementById('orderId').value;
+            if (!orderId) {
+                showStatus('orderStatus', '❌ Please enter Order ID', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/delivery/start-delivery/${orderId}`, {
+                    method: 'PUT',
+                    headers: { 'X-Agent-Id': agentId }
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('orderStatus', '✅ Delivery started from local station', 'success');
+                } else {
+                    showStatus('orderStatus', `❌ Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus('orderStatus', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        async function completeDelivery() {
+            if (!agentId) {
+                showStatus('orderStatus', '❌ Please register as agent first', 'error');
+                return;
+            }
+
+            const orderId = document.getElementById('orderId').value;
+            if (!orderId) {
+                showStatus('orderStatus', '❌ Please enter Order ID', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/delivery/complete/${orderId}`, {
+                    method: 'PUT',
+                    headers: { 
+                        'X-Agent-Id': agentId,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        deliveryProof: 'Delivered at doorstep - ' + new Date().toISOString()
+                    })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showStatus('orderStatus', '✅ Delivery completed successfully!', 'success');
+                } else {
+                    showStatus('orderStatus', `❌ Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus('orderStatus', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        // Order Tracking
+        async function trackOrder() {
+            const orderId = document.getElementById('trackOrderId').value;
+            if (!orderId) {
+                showStatus('orderStatus', '❌ Please enter Order ID to track', 'error');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/delivery/track/${orderId}`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    displayTrackingResults(data);
+                } else {
+                    showStatus('orderStatus', `❌ Error: ${data.message}`, 'error');
+                }
+            } catch (error) {
+                showStatus('orderStatus', `❌ Network error: ${error.message}`, 'error');
+            }
+        }
+
+        function displayTrackingResults(trackingData) {
+            const resultsDiv = document.getElementById('trackingResults');
+            const journeyDiv = document.getElementById('journeyDisplay');
+            const agentDiv = document.getElementById('agentInfo');
+            const stationDiv = document.getElementById('stationInfo');
+
+            // Display delivery journey
+            let journeyHtml = '';
+            if (trackingData.deliveryJourney && trackingData.deliveryJourney.stages) {
+                trackingData.deliveryJourney.stages.forEach((stage, index) => {
+                    const isCompleted = stage.status === 'completed';
+                    const isInProgress = stage.status === 'in_progress';
+                    const stageClass = isCompleted ? 'stage-completed' : (isInProgress ? 'stage-in-progress' : 'stage-pending');
+                    
+                    journeyHtml += `
+                        <div class="journey-stage">
+                            <div class="stage-icon ${stageClass}">
+                                ${isCompleted ? '✓' : (isInProgress ? '⏳' : (index + 1))}
+                            </div>
+                            <div>
+                                <strong>${stage.stage.replace(/_/g, ' ').toUpperCase()}</strong><br>
+                                <small>${stage.description}</small><br>
+                                <small>📍 ${stage.location}</small><br>
+                                <small>⏰ ${new Date(stage.estimatedTime).toLocaleString()}</small>
+                            </div>
+                        </div>
+                        ${index < trackingData.deliveryJourney.stages.length - 1 ? `<div class="progress-line ${isCompleted ? 'completed' : ''}"></div>` : ''}
+                    `;
+                });
+            } else {
+                journeyHtml = '<div class="info">No delivery journey data available</div>';
+            }
+            journeyDiv.innerHTML = journeyHtml;
+
+            // Display agent information
+            if (trackingData.agent) {
+                agentDiv.innerHTML = `
+                    <div class="station-item">
+                        <strong>Agent:</strong> ${trackingData.agent.name}<br>
+                        <strong>Phone:</strong> ${trackingData.agent.phone}<br>
+                        <strong>Vehicle:</strong> ${trackingData.agent.vehicleType}<br>
+                        ${trackingData.distanceRemaining ? `<strong>Distance Remaining:</strong> ${trackingData.distanceRemaining.toFixed(1)} km<br>` : ''}
+                        ${trackingData.estimatedArrival ? `<strong>ETA:</strong> ${new Date(trackingData.estimatedArrival).toLocaleString()}` : ''}
+                    </div>
+                `;
+            } else {
+                agentDiv.innerHTML = '<div class="info">No agent assigned yet</div>';
+            }
+
+            // Display station information
+            if (trackingData.stations) {
+                let stationHtml = '';
+                Object.entries(trackingData.stations).forEach(([type, station]) => {
+                    if (station) {
+                        stationHtml += `
+                            <div class="station-item">
+                                <strong>${type.replace(/([A-Z])/g, ' $1').toUpperCase()}:</strong> ${station.name}<br>
+                                <small>📍 ${station.address}, ${station.city}</small>
+                            </div>
+                        `;
+                    }
+                });
+                stationDiv.innerHTML = stationHtml || '<div class="info">No station information available</div>';
+            } else {
+                stationDiv.innerHTML = '<div class="info">No station information available</div>';
+            }
+
+            resultsDiv.style.display = 'block';
+        }
+
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.className = `status ${type}`;
+            element.textContent = message;
+            element.style.display = 'block';
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Initialize
+        if (agentId) {
+            showStatus('agentStatus', `Agent ID: ${agentId} (from previous session)`, 'info');
+        }
+    </script>
+</body>
+</html>
