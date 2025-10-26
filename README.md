@@ -1,73 +1,122 @@
-# Welcome to your E-Commerce project
+# ShopZone - Next-Gen E-Commerce Platform
 
-## Project info
+## Overview
 
-**URL**: https://lovable.dev/projects/4a32570a-e0ef-4217-bee4-3cb19900272a
+A modern, full-stack e-commerce platform built with the MERN stack featuring unique gamification, rewards system, and advanced delivery tracking.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **Customer Dashboard**: Product browsing, search, cart, wishlist, checkout, and order history
+- **Gamification System**: 5-tier loyalty program (Bronze to Diamond) with points, achievements, and leaderboard  
+- **Live Delivery Tracking**: 9-stage real-time order tracking from placement to delivery
+- **Admin Panel**: Complete CRUD operations for products, order management, and sales analytics
+- **Secure Authentication**: JWT-based authentication system
+- **Price Intelligence**: Smart price tracking and recommendations (experimental)
 
-**Use Lovable**
+## Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/4a32570a-e0ef-4217-bee4-3cb19900272a) and start prompting.
+- **Frontend**: React, Vite, Tailwind CSS, shadcn/ui, Framer Motion
+- **Backend**: Node.js, Express.js
+- **Database**: MongoDB
+- **Authentication**: JWT
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+- Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- MongoDB installed locally or MongoDB Atlas account
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Installation
 
-Follow these steps:
-
+1. Clone the repository:
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+git clone https://github.com/SrinivasVarma06/Ecommerce.git
+cd next-gen-commerce-mentor
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. Install frontend dependencies:
+```sh
+npm install
+```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. Install backend dependencies:
+```sh
+cd backend
+npm install
+cd ..
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+4. Set up environment variables:
+
+Create a `.env` file in the `backend` directory with:
+```
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRES_IN=7d
+PORT=5000
+```
+
+5. Run the application:
+
+**Backend:**
+```sh
+cd backend
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+**Frontend:**
+```sh
+npm run dev
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+The application will be available at `http://localhost:8080`
 
-**Use GitHub Codespaces**
+## Project Structure
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```
+├── src/                    # Frontend source code
+│   ├── components/         # React components
+│   ├── contexts/          # Context providers
+│   ├── pages/             # Page components
+│   └── services/          # API services
+├── backend/               # Backend source code
+│   ├── routes/            # API routes
+│   └── server.js          # Express server
+└── public/                # Static assets
+```
 
-## What technologies are used for this project?
+## Key Features Explained
 
-This project is built with:
+### Gamification System
+- Earn points through purchases, reviews, and daily logins
+- Progress through 5 levels: Bronze, Silver, Gold, Platinum, Diamond
+- Unlock achievements and compete on the leaderboard
+- Redeem points for discounts (100 points = $1 off)
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+### Delivery Tracking
+9-stage tracking system:
+1. Order Placed
+2. Fulfillment Processing
+3. Regional Transit
+4. Local Station
+5. Waiting for Agent
+6. Agent Assigned
+7. Picked Up
+8. On the Way
+9. Delivered
 
-## How can I deploy this project?
+### Admin Features
+- Product management (CRUD operations)
+- Order status updates
+- Sales analytics and revenue tracking
+- User management
+- Return request handling
 
-Simply open [Lovable](https://lovable.dev/projects/4a32570a-e0ef-4217-bee4-3cb19900272a) and click on Share -> Publish.
+## Author
 
-## Can I connect a custom domain to my Lovable project?
+**Srinivas Varma**
 
-Yes, you can!
+## License
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+This project is open source and available under the MIT License.
