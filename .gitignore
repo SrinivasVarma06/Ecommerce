@@ -62,3 +62,7 @@ coverage
 *.bak
 *.swp
 *~
+
+# Deployment guides - COMMIT THESE (not ignored)
+# DEPLOYMENT.md
+# DEPLOYMENT-CHECKLIST.md

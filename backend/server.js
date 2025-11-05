@@ -5,7 +5,16 @@ const jwt=require('jsonwebtoken');
 const cors=require('cors');
 
 const app=express();
-app.use(cors());
+
+// CORS configuration for production
+const corsOptions = {
+  origin: process.env.FRONTEND_URL 
+    ? [process.env.FRONTEND_URL, 'http://localhost:8080', 'http://localhost:5173'] 
+    : '*', // Allow all origins in development
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // Serve static files from the parent directory (where delivery-management.html is located)

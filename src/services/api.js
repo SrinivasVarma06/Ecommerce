@@ -1,4 +1,9 @@
-﻿const BASE_URL = 'http://localhost:5000/api';
+﻿// Use environment variable for API URL, fallback to localhost for development
+const BASE_URL = import.meta.env.VITE_API_URL 
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : 'http://localhost:5000/api';
+
+console.log('API Base URL:', BASE_URL); // For debugging
 
 async function apiCall(endpoint, options = {}) {
   const response = await fetch(`${BASE_URL}${endpoint}`, {
