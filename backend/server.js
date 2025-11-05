@@ -1,4 +1,7 @@
-require('dotenv').config({ path: __dirname + '/.env' });
+// Load .env file only in development (Render provides env vars directly)
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config({ path: __dirname + '/.env' });
+}
 const express=require('express');
 const bcrypt=require('bcrypt');
 const jwt=require('jsonwebtoken');
