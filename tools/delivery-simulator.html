@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Delivery Tracking Simulator</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { margin: 0; padding: 20px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); min-height: 100vh; color: #fff; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; }
+        .header h1 { margin: 0 0 10px 0; font-size: 2em; }
+        .header p { margin: 0; opacity: 0.9; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+        .card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 25px; }
+        .card h3 { margin: 0 0 20px 0; color: #a78bfa; font-size: 1.2em; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; color: #a5b4fc; font-size: 14px; }
+        input, select { width: 100%; padding: 12px; border: 2px solid rgba(255,255,255,0.1); border-radius: 10px; font-size: 14px; background: rgba(255,255,255,0.05); color: #fff; margin-bottom: 15px; }
+        input:focus, select:focus { outline: none; border-color: #667eea; }
+        input::placeholder { color: rgba(255,255,255,0.4); }
+        button { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 12px 24px; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.3s; margin: 5px 5px 5px 0; }
+        button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
+        button:disabled { background: #4a5568; cursor: not-allowed; transform: none; }
+        button.success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        button.danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+        .status-box { padding: 12px; margin: 10px 0; border-radius: 8px; font-size: 14px; }
+        .status-box.success { background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; color: #6ee7b7; }
+        .status-box.error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; }
+        .status-box.info { background: rgba(59, 130, 246, 0.2); border: 1px solid #3b82f6; color: #93c5fd; }
+        .live-coords { font-family: monospace; font-size: 1.3em; text-align: center; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; margin: 15px 0; }
+        .progress-bar { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin: 10px 0; }
+        .progress-bar .fill { height: 100%; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.5s ease; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge.running { background: #fbbf24; color: #000; }
+        .badge.stopped { background: #6b7280; }
+        .log-box { font-family: monospace; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; font-size: 12px; max-height: 250px; overflow-y: auto; }
+        .log-box .entry { padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .log-box .entry:last-child { border-bottom: none; }
+        .row { display: flex; gap: 10px; }
+        .row > * { flex: 1; }
+        .step-number { display: inline-block; width: 28px; height: 28px; line-height: 28px; text-align: center; background: #667eea; border-radius: 50%; font-weight: bold; margin-right: 10px; }
+        .debug-panel { margin-top: 20px; padding: 20px; background: rgba(0,0,0,0.4); border-radius: 10px; }
+        .debug-panel h4 { margin: 0 0 15px 0; color: #fbbf24; }
+        .debug-panel pre { background: #000; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Delivery Tracking Simulator</h1>
+            <p>Test live tracking without real delivery agents - Works with Leaflet/OpenStreetMap</p>
+        </div>
+
+        <div class="grid">
+            <!-- Step 1: Register Agent -->
+            <div class="card">
+                <h3><span class="step-number">1</span> Register Test Agent</h3>
+                <label>Agent Name</label>
+                <input type="text" id="agentName" value="Rahul Kumar" placeholder="Agent name">
+                <label>Phone Number</label>
+                <input type="text" id="agentPhone" value="+91 98765 43210" placeholder="Phone">
+                <label>Vehicle Type</label>
+                <select id="vehicleType">
+                    <option value="bike">🏍️ Bike</option>
+                    <option value="scooter" selected>🛵 Scooter</option>
+                    <option value="car">🚗 Car</option>
+                </select>
+                <button onclick="registerAgent()">✨ Register Agent</button>
+                <div id="step1Status"></div>
+            </div>
+
+            <!-- Step 2: Link to Order -->
+            <div class="card">
+                <h3><span class="step-number">2</span> Link Agent to Order</h3>
+                <label>Order ID (from your MongoDB/Orders page)</label>
+                <input type="text" id="orderId" placeholder="Paste full order ID (24 characters)">
+                <label>Agent ID (auto-filled after Step 1)</label>
+                <input type="text" id="agentId" readonly placeholder="Complete Step 1 first">
+                <button onclick="linkAgentToOrder()">🔗 Link Agent to Order</button>
+                <div id="step2Status"></div>
+            </div>
+
+            <!-- Step 3: Set Route -->
+            <div class="card">
+                <h3><span class="step-number">3</span> Set Destination</h3>
+                <div class="row">
+                    <div>
+                        <label>Latitude</label>
+                        <input type="number" id="destLat" step="any" value="19.0760">
+                    </div>
+                    <div>
+                        <label>Longitude</label>
+                        <input type="number" id="destLng" step="any" value="72.8777">
+                    </div>
+                </div>
+                <p style="font-size: 12px; color: #888; margin: 0 0 15px 0;">
+                    💡 Get coordinates: Open Google Maps → Right-click location → "What's here?" → Copy numbers
+                </p>
+                <label>Simulation Speed</label>
+                <select id="simSpeed">
+                    <option value="3000">🐢 Slow (3 sec)</option>
+                    <option value="2000" selected>🚶 Normal (2 sec)</option>
+                    <option value="1000">🏃 Fast (1 sec)</option>
+                </select>
+            </div>
+
+            <!-- Step 4: Run -->
+            <div class="card">
+                <h3><span class="step-number">4</span> Run Simulation</h3>
+                <div class="live-coords">
+                    📍 <span id="currentLat">--</span>, <span id="currentLng">--</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div style="text-align: center; margin-bottom: 15px;">
+                    <span id="progressText">0%</span> • <span id="simStatus" class="badge stopped">Stopped</span>
+                </div>
+                <button onclick="startSimulation()" id="startBtn" class="success">▶️ Start Simulation</button>
+                <button onclick="pauseSimulation()" id="pauseBtn" disabled>⏸️ Pause</button>
+                <button onclick="resetSimulation()" class="danger">🔄 Reset</button>
+                <div id="step4Status"></div>
+            </div>
+        </div>
+
+        <!-- Log -->
+        <div class="card" style="margin-top: 20px;">
+            <h3>📋 Activity Log</h3>
+            <div class="log-box" id="logBox">
+                <div class="entry" style="color: #888;">Ready to start...</div>
+            </div>
+        </div>
+
+        <!-- Debug Panel -->
+        <div class="debug-panel">
+            <h4>🔧 Debug Info (check this if tracking doesn't work)</h4>
+            <button onclick="checkOrderStatus()">Check Order Status</button>
+            <button onclick="checkAgentStatus()">Check Agent Status</button>
+            <button onclick="testTrackingEndpoint()">Test Tracking API</button>
+            <pre id="debugOutput">Click a button above to see debug info...</pre>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let agentId = null;
+        let simulationInterval = null;
+        let currentStep = 0;
+        let routeSteps = [];
+        let isPaused = false;
+
+        // Generate smooth route
+        function generateRoute(startLat, startLng, endLat, endLng, steps = 25) {
+            const route = [];
+            for (let i = 0; i <= steps; i++) {
+                const progress = i / steps;
+                const jitter = (Math.random() - 0.5) * 0.0005;
+                route.push({
+                    lat: startLat + (endLat - startLat) * progress + jitter,
+                    lng: startLng + (endLng - startLng) * progress + jitter
+                });
+            }
+            return route;
+        }
+
+        // Log helper
+        function log(msg, type = 'info') {
+            const logBox = document.getElementById('logBox');
+            const time = new Date().toLocaleTimeString();
+            const color = type === 'error' ? '#fca5a5' : type === 'success' ? '#6ee7b7' : '#93c5fd';
+            logBox.innerHTML = `<div class="entry" style="color: ${color}">[${time}] ${msg}</div>` + logBox.innerHTML;
+        }
+
+        // Status helper
+        function showStatus(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.className = `status-box ${type}`;
+            el.innerHTML = message;
+        }
+
+        // Debug output
+        function debug(data) {
+            document.getElementById('debugOutput').textContent = JSON.stringify(data, null, 2);
+        }
+
+        // Step 1: Register Agent
+        async function registerAgent() {
+            const name = document.getElementById('agentName').value;
+            const phone = document.getElementById('agentPhone').value;
+            const vehicleType = document.getElementById('vehicleType').value;
+
+            try {
+                log('Registering agent...');
+                const response = await fetch(`${API_BASE}/delivery/agent/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, vehicleType, licenseNumber: 'TEST-' + Date.now() })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    agentId = data.agentId;
+                    document.getElementById('agentId').value = agentId;
+                    showStatus('step1Status', `✅ Agent registered! ID: <code>${agentId}</code>`, 'success');
+                    log(`Agent "${name}" registered: ${agentId}`, 'success');
+                } else {
+                    showStatus('step1Status', `❌ ${data.message}`, 'error');
+                    log(`Registration failed: ${data.message}`, 'error');
+                }
+            } catch (e) {
+                showStatus('step1Status', `❌ Connection error: ${e.message}`, 'error');
+                log(`Error: ${e.message}`, 'error');
+            }
+        }
+
+        // Step 2: Link Agent to Order
+        async function linkAgentToOrder() {
+            const orderId = document.getElementById('orderId').value.trim();
+            const agentIdVal = document.getElementById('agentId').value;
+
+            if (!orderId) {
+                showStatus('step2Status', '❌ Please enter Order ID', 'error');
+                return;
+            }
+            if (!agentIdVal) {
+                showStatus('step2Status', '❌ Register an agent first (Step 1)', 'error');
+                return;
+            }
+            if (orderId.length !== 24) {
+                showStatus('step2Status', '⚠️ Order ID should be 24 characters. Check your order in MongoDB or Orders page.', 'error');
+                return;
+            }
+
+            try {
+                log(`Linking agent ${agentIdVal.slice(-6)} to order ${orderId.slice(-6)}...`);
+                
+                const response = await fetch(`${API_BASE}/delivery/simulate/assign-agent`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ orderId, agentId: agentIdVal })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showStatus('step2Status', `✅ Success! Order status is now "Out for Delivery".<br>Agent: ${data.order?.agent?.name}`, 'success');
+                    log(`Order linked! Status: out_for_delivery`, 'success');
+                    debug(data);
+                } else {
+                    showStatus('step2Status', `❌ ${data.message}`, 'error');
+                    log(`Link failed: ${data.message}`, 'error');
+                    debug(data);
+                }
+            } catch (e) {
+                showStatus('step2Status', `❌ ${e.message}`, 'error');
+                log(`Error: ${e.message}`, 'error');
+            }
+        }
+
+        // Step 4: Start Simulation
+        function startSimulation() {
+            if (!agentId) {
+                showStatus('step4Status', '❌ Complete Step 1 first!', 'error');
+                return;
+            }
+
+            const destLat = parseFloat(document.getElementById('destLat').value);
+            const destLng = parseFloat(document.getElementById('destLng').value);
+
+            // Start 1-2 km away
+            const startLat = destLat + (Math.random() * 0.015 + 0.005);
+            const startLng = destLng + (Math.random() * 0.015 + 0.005);
+
+            routeSteps = generateRoute(startLat, startLng, destLat, destLng, 25);
+            currentStep = 0;
+            isPaused = false;
+
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+            document.getElementById('simStatus').className = 'badge running';
+            document.getElementById('simStatus').textContent = 'Running';
+
+            log(`🚀 Started! Moving from (${startLat.toFixed(4)}, ${startLng.toFixed(4)}) → (${destLat.toFixed(4)}, ${destLng.toFixed(4)})`, 'success');
+
+            const speed = parseInt(document.getElementById('simSpeed').value);
+            simulationInterval = setInterval(updateLocation, speed);
+            updateLocation(); // Run immediately
+        }
+
+        // Update agent location
+        async function updateLocation() {
+            if (isPaused || currentStep >= routeSteps.length) {
+                if (currentStep >= routeSteps.length) {
+                    stopSimulation();
+                    log('🎉 Delivery complete!', 'success');
+                    showStatus('step4Status', '✅ Simulation complete! Agent arrived.', 'success');
+                }
+                return;
+            }
+
+            const loc = routeSteps[currentStep];
+            
+            // Update UI
+            document.getElementById('currentLat').textContent = loc.lat.toFixed(6);
+            document.getElementById('currentLng').textContent = loc.lng.toFixed(6);
+            const progress = Math.round((currentStep / (routeSteps.length - 1)) * 100);
+            document.getElementById('progressFill').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `${progress}%`;
+
+            // Send to backend
+            try {
+                const response = await fetch(`${API_BASE}/delivery/agent/location`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'x-agent-id': agentId },
+                    body: JSON.stringify({ latitude: loc.lat, longitude: loc.lng })
+                });
+
+                if (response.ok) {
+                    log(`📍 Step ${currentStep + 1}/${routeSteps.length}: (${loc.lat.toFixed(5)}, ${loc.lng.toFixed(5)})`);
+                } else {
+                    const err = await response.json();
+                    log(`⚠️ API error: ${err.message}`, 'error');
+                }
+            } catch (e) {
+                log(`❌ ${e.message}`, 'error');
+            }
+
+            currentStep++;
+        }
+
+        // Pause/Resume
+        function pauseSimulation() {
+            isPaused = !isPaused;
+            document.getElementById('pauseBtn').textContent = isPaused ? '▶️ Resume' : '⏸️ Pause';
+            document.getElementById('simStatus').textContent = isPaused ? 'Paused' : 'Running';
+            log(isPaused ? '⏸️ Paused' : '▶️ Resumed');
+        }
+
+        // Stop
+        function stopSimulation() {
+            if (simulationInterval) clearInterval(simulationInterval);
+            simulationInterval = null;
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('simStatus').className = 'badge stopped';
+            document.getElementById('simStatus').textContent = 'Stopped';
+        }
+
+        // Reset
+        function resetSimulation() {
+            stopSimulation();
+            currentStep = 0;
+            routeSteps = [];
+            isPaused = false;
+            document.getElementById('currentLat').textContent = '--';
+            document.getElementById('currentLng').textContent = '--';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressText').textContent = '0%';
+            document.getElementById('pauseBtn').textContent = '⏸️ Pause';
+            log('🔄 Reset');
+        }
+
+        // Debug: Check order status
+        async function checkOrderStatus() {
+            const orderId = document.getElementById('orderId').value.trim();
+            if (!orderId) { debug({ error: 'Enter order ID first' }); return; }
+            
+            try {
+                const response = await fetch(`${API_BASE}/delivery/simulate/status/${orderId}`);
+                const data = await response.json();
+                debug(data);
+                log(`Order status: ${data.status}, Agent: ${data.agentId || 'None'}, Has location: ${!!data.agentLocation}`);
+            } catch (e) {
+                debug({ error: e.message });
+            }
+        }
+
+        // Debug: Check agent status
+        async function checkAgentStatus() {
+            if (!agentId) { debug({ error: 'Register agent first' }); return; }
+            
+            try {
+                const response = await fetch(`${API_BASE}/delivery/agent/${agentId}`);
+                const data = await response.json();
+                debug(data);
+            } catch (e) {
+                debug({ error: e.message });
+            }
+        }
+
+        // Debug: Test tracking endpoint
+        async function testTrackingEndpoint() {
+            const orderId = document.getElementById('orderId').value.trim();
+            if (!orderId) { debug({ error: 'Enter order ID first' }); return; }
+            
+            try {
+                const response = await fetch(`${API_BASE}/delivery/track/${orderId}`);
+                const data = await response.json();
+                debug(data);
+                
+                if (data.agent?.currentLocation) {
+                    log(`✅ Tracking works! Agent at: ${data.agent.currentLocation.latitude}, ${data.agent.currentLocation.longitude}`, 'success');
+                } else {
+                    log(`⚠️ No agent location found. Agent ID: ${data.orderId}`, 'error');
+                }
+            } catch (e) {
+                debug({ error: e.message });
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,7 +1,6 @@
 // Load .env file only in development (Render provides env vars directly)
-if (process.env.NODE_ENV !== 'production') {
-  require('dotenv').config({ path: __dirname + '/.env' });
-}
+require('dotenv').config();
+
 const express=require('express');
 const bcrypt=require('bcrypt');
 const jwt=require('jsonwebtoken');
@@ -9,33 +8,22 @@ const cors=require('cors');
 
 const app=express();
 
-// CORS configuration for production
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl)
     if (!origin) return callback(null, true);
-    
-    // List of allowed origins
     const allowedOrigins = [
       'http://localhost:8080',
       'http://localhost:5173',
     ];
-    
-    // Add production frontend URL if set
     if (process.env.FRONTEND_URL) {
       allowedOrigins.push(process.env.FRONTEND_URL);
     }
-    
-    // Allow all Vercel preview and production URLs
     if (origin.includes('.vercel.app')) {
       return callback(null, true);
     }
-    
-    // Check if origin is in allowed list
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
-      // In development, allow all origins
       if (process.env.NODE_ENV !== 'production') {
         callback(null, true);
       } else {
@@ -49,8 +37,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Serve static files from the parent directory (where delivery-management.html is located)
-app.use(express.static('../'));
+// Serve static files from the tools directory (delivery-management.html etc.)
+app.use('/tools', express.static('../tools'));
 
 const PORT=process.env.PORT || 5000;
 const JWT_SECRET=process.env.JWT_SECRET

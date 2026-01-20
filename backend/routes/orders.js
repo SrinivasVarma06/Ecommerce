@@ -185,16 +185,12 @@ function createOrdersRouter(usersCollection, ordersCollection, productsCollectio
       const { orderId } = req.params;
       const { status, description } = req.body;
 
+      // Simplified statuses like Amazon
       const validStatuses = [
-        'order_placed',
-        'fulfillment_processing', 
-        'regional_transit',
-        'local_station',
-        'waiting_for_agent', 
-        'agent_assigned', 
-        'picked_up', 
-        'on_the_way', 
-        'delivered', 
+        'order_placed',    // Order confirmed
+        'shipped',         // Package shipped
+        'out_for_delivery', // Driver on the way
+        'delivered',       // Delivered
         'cancelled'
       ];
 
@@ -241,15 +237,10 @@ function createOrdersRouter(usersCollection, ordersCollection, productsCollectio
   // Helper function to get status descriptions
   function getStatusDescription(status) {
     const descriptions = {
-      'order_placed': 'Order placed successfully, processing started',
-      'fulfillment_processing': 'Order being processed at fulfillment center',
-      'regional_transit': 'Order in transit to regional hub',
-      'local_station': 'Order arrived at local delivery station',
-      'waiting_for_agent': 'Waiting for delivery agent assignment at local station',
-      'agent_assigned': 'Delivery agent assigned to your order',
-      'picked_up': 'Order picked up by delivery agent from local station',
-      'on_the_way': 'Order is on the way to your location',
-      'delivered': 'Order has been successfully delivered',
+      'order_placed': 'Your order has been confirmed',
+      'shipped': 'Your package is on its way',
+      'out_for_delivery': 'Your package is out for delivery',
+      'delivered': 'Your package has been delivered',
       'cancelled': 'Order has been cancelled'
     };
     return descriptions[status] || 'Status updated';

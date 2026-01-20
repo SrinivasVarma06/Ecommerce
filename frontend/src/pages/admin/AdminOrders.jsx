@@ -62,24 +62,34 @@ const AdminOrders = () => {
     }
   };
 
+  // Map old granular statuses to simplified Amazon-style statuses
+  const getSimplifiedStatus = (status) => {
+    const statusMapping = {
+      'order_placed': 'order_placed',
+      'fulfillment_processing': 'order_placed',
+      'regional_transit': 'shipped',
+      'shipped': 'shipped',
+      'local_station': 'shipped',
+      'waiting_for_agent': 'out_for_delivery',
+      'agent_assigned': 'out_for_delivery',
+      'picked_up': 'out_for_delivery',
+      'on_the_way': 'out_for_delivery',
+      'out_for_delivery': 'out_for_delivery',
+      'delivered': 'delivered',
+      'cancelled': 'cancelled'
+    };
+    return statusMapping[status] || status;
+  };
+
   const getStatusColor = (status) => {
-    switch (status) {
+    const simplified = getSimplifiedStatus(status);
+    switch (simplified) {
       case 'delivered':
         return 'text-green-600 bg-green-50';
-      case 'on_the_way':
+      case 'out_for_delivery':
         return 'text-blue-600 bg-blue-50';
-      case 'picked_up':
-        return 'text-blue-500 bg-blue-50';
-      case 'agent_assigned':
-        return 'text-cyan-600 bg-cyan-50';
-      case 'waiting_for_agent':
-        return 'text-yellow-500 bg-yellow-50';
-      case 'local_station':
-        return 'text-orange-500 bg-orange-50';
-      case 'regional_transit':
+      case 'shipped':
         return 'text-purple-600 bg-purple-50';
-      case 'fulfillment_processing':
-        return 'text-indigo-600 bg-indigo-50';
       case 'order_placed':
         return 'text-gray-600 bg-gray-50';
       case 'cancelled':
@@ -90,19 +100,15 @@ const AdminOrders = () => {
   };
 
   const getStatusLabel = (status) => {
+    const simplified = getSimplifiedStatus(status);
     const labels = {
-      'order_placed': 'Order Placed',
-      'fulfillment_processing': 'Processing',
-      'regional_transit': 'In Transit (Regional)',
-      'local_station': 'At Local Station',
-      'waiting_for_agent': 'Awaiting Agent',
-      'agent_assigned': 'Agent Assigned',
-      'picked_up': 'Picked Up',
-      'on_the_way': 'Out for Delivery',
+      'order_placed': 'Ordered',
+      'shipped': 'Shipped',
+      'out_for_delivery': 'Out for Delivery',
       'delivered': 'Delivered',
       'cancelled': 'Cancelled'
     };
-    return labels[status] || status;
+    return labels[simplified] || status;
   };
 
   if (!user || user.role !== 'admin') {
@@ -224,21 +230,16 @@ const AdminOrders = () => {
                       <div>
                         <h3 className="font-semibold mb-2">Update Status</h3>
                         <Select
-                          value={order.status}
+                          value={getSimplifiedStatus(order.status)}
                           onValueChange={(newStatus) => handleStatusChange(orderId, newStatus)}
                         >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="order_placed">Order Placed</SelectItem>
-                            <SelectItem value="fulfillment_processing">Processing</SelectItem>
-                            <SelectItem value="regional_transit">In Transit (Regional)</SelectItem>
-                            <SelectItem value="local_station">At Local Station</SelectItem>
-                            <SelectItem value="waiting_for_agent">Awaiting Agent</SelectItem>
-                            <SelectItem value="agent_assigned">Agent Assigned</SelectItem>
-                            <SelectItem value="picked_up">Picked Up</SelectItem>
-                            <SelectItem value="on_the_way">Out for Delivery</SelectItem>
+                            <SelectItem value="order_placed">Ordered</SelectItem>
+                            <SelectItem value="shipped">Shipped</SelectItem>
+                            <SelectItem value="out_for_delivery">Out for Delivery</SelectItem>
                             <SelectItem value="delivered">Delivered</SelectItem>
                             <SelectItem value="cancelled">Cancelled</SelectItem>
                           </SelectContent>

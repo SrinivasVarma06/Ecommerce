@@ -378,6 +378,36 @@ function createDeliveryRouter(ordersCollection, deliveryAgentsCollection, delive
     }
   });
 
+  // Get agent by ID (for debugging)
+  router.get('/agent/:agentId', async (req, res) => {
+    try {
+      const { agentId } = req.params;
+      
+      if (!ObjectId.isValid(agentId)) {
+        return res.status(400).json({ message: 'Invalid agent ID' });
+      }
+
+      const agent = await deliveryAgentsCollection.findOne({ _id: new ObjectId(agentId) });
+      
+      if (!agent) {
+        return res.status(404).json({ message: 'Agent not found' });
+      }
+
+      res.json({
+        agentId: agent._id,
+        name: agent.name,
+        phone: agent.phone,
+        vehicleType: agent.vehicleType,
+        status: agent.status,
+        currentLocation: agent.currentLocation,
+        currentOrder: agent.currentOrder,
+        lastSeen: agent.lastSeen
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
   // Agent location update (same as before but with station verification)
   router.put('/agent/location', requireAgentAuth, async (req, res) => {
     try {
@@ -407,7 +437,7 @@ function createDeliveryRouter(ordersCollection, deliveryAgentsCollection, delive
       const agent = await deliveryAgentsCollection.findOne({ _id: new ObjectId(req.agentId) });
       if (agent.currentOrder) {
         const order = await ordersCollection.findOne({ _id: new ObjectId(agent.currentOrder) });
-        if (order && ['agent_assigned', 'picked_up', 'on_the_way'].includes(order.status)) {
+        if (order && ['out_for_delivery', 'agent_assigned', 'picked_up', 'on_the_way'].includes(order.status)) {
           await updateOrderLocationTracking(order, location);
         }
       }
@@ -456,8 +486,8 @@ function createDeliveryRouter(ordersCollection, deliveryAgentsCollection, delive
             vehicleType: agent.vehicleType
           };
           
-          // Calculate delivery specifics only when agent is active
-          if (['agent_assigned', 'picked_up', 'on_the_way'].includes(order.status) && agent.currentLocation) {
+          // Calculate delivery specifics when order is out for delivery
+          if (['out_for_delivery', 'agent_assigned', 'picked_up', 'on_the_way'].includes(order.status) && agent.currentLocation) {
             trackingInfo.estimatedArrival = calculateEstimatedArrival(
               agent.currentLocation, 
               order.shippingAddress
@@ -638,8 +668,11 @@ function createDeliveryRouter(ordersCollection, deliveryAgentsCollection, delive
     
     const lat1 = point1.latitude || point1.lat;
     const lon1 = point1.longitude || point1.lng;
-    const lat2 = point2.latitude || point2.lat || 40.7128;
-    const lon2 = point2.longitude || point2.lng || -74.0060;
+    // Default to IIT Dharwad coordinates instead of USA
+    const lat2 = point2.latitude || point2.lat || 15.4507;
+    const lon2 = point2.longitude || point2.lng || 74.9353;
+    
+    if (!lat1 || !lon1) return null;
     
     const R = 6371; // Earth's radius in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -662,6 +695,169 @@ function createDeliveryRouter(ordersCollection, deliveryAgentsCollection, delive
     
     return estimatedArrival;
   }
+
+  // ============================================
+  // SIMULATION ENDPOINTS (For Testing)
+  // ============================================
+
+  // Simulate assigning an agent to an order (for testing)
+  router.post('/simulate/assign-agent', async (req, res) => {
+    try {
+      const { orderId, agentId } = req.body;
+
+      if (!orderId || !agentId) {
+        return res.status(400).json({ message: 'Order ID and Agent ID required' });
+      }
+
+      // Verify agent exists
+      const agent = await deliveryAgentsCollection.findOne({ _id: new ObjectId(agentId) });
+      if (!agent) {
+        return res.status(404).json({ message: 'Agent not found' });
+      }
+
+      // Update order with agent info and set status to out_for_delivery
+      await ordersCollection.updateOne(
+        { _id: new ObjectId(orderId) },
+        {
+          $set: {
+            agentId: agentId,
+            agentName: agent.name,
+            agentPhone: agent.phone,
+            agentVehicle: agent.vehicleType,
+            status: 'out_for_delivery',
+            updatedAt: new Date()
+          },
+          $push: {
+            'tracking.statusHistory': {
+              status: 'out_for_delivery',
+              timestamp: new Date(),
+              description: `Delivery agent ${agent.name} is on the way`
+            }
+          }
+        }
+      );
+
+      // Update agent status
+      await deliveryAgentsCollection.updateOne(
+        { _id: new ObjectId(agentId) },
+        { 
+          $set: { 
+            status: 'busy', 
+            currentOrder: orderId 
+          } 
+        }
+      );
+
+      res.json({
+        message: 'Agent assigned to order successfully',
+        order: {
+          orderId,
+          status: 'out_for_delivery',
+          agent: {
+            id: agentId,
+            name: agent.name,
+            phone: agent.phone,
+            vehicle: agent.vehicleType
+          }
+        }
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Get simulation status for testing
+  router.get('/simulate/status/:orderId', async (req, res) => {
+    try {
+      const { orderId } = req.params;
+      const order = await ordersCollection.findOne({ _id: new ObjectId(orderId) });
+      
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      let agentLocation = null;
+      if (order.agentId) {
+        const agent = await deliveryAgentsCollection.findOne({ _id: new ObjectId(order.agentId) });
+        if (agent && agent.currentLocation) {
+          agentLocation = agent.currentLocation;
+        }
+      }
+
+      res.json({
+        orderId,
+        status: order.status,
+        agentId: order.agentId,
+        agentName: order.agentName,
+        agentLocation,
+        shippingAddress: order.shippingAddress,
+        canTrack: ['out_for_delivery'].includes(order.status) && !!agentLocation
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+
+  // Mark order as delivered (for simulation)
+  router.post('/simulate/deliver/:orderId', async (req, res) => {
+    try {
+      const { orderId } = req.params;
+
+      if (!ObjectId.isValid(orderId)) {
+        return res.status(400).json({ message: 'Invalid order ID' });
+      }
+
+      const order = await ordersCollection.findOne({ _id: new ObjectId(orderId) });
+      if (!order) {
+        return res.status(404).json({ message: 'Order not found' });
+      }
+
+      // Update order status to delivered
+      await ordersCollection.updateOne(
+        { _id: new ObjectId(orderId) },
+        {
+          $set: {
+            status: 'delivered',
+            deliveredAt: new Date(),
+            updatedAt: new Date()
+          },
+          $push: {
+            'tracking.statusHistory': {
+              status: 'delivered',
+              timestamp: new Date(),
+              description: 'Order has been delivered successfully'
+            }
+          }
+        }
+      );
+
+      // Free up the agent
+      if (order.agentId) {
+        await deliveryAgentsCollection.updateOne(
+          { _id: new ObjectId(order.agentId) },
+          {
+            $set: {
+              status: 'available',
+              currentOrder: null
+            },
+            $inc: { totalDeliveries: 1 }
+          }
+        );
+      }
+
+      res.json({
+        message: 'Order marked as delivered',
+        orderId,
+        status: 'delivered',
+        deliveredAt: new Date()
+      });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
 
   return router;
 }

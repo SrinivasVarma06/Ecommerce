@@ -261,3 +261,49 @@ export const priceTrackingAPI = {
       body: JSON.stringify({ productId, targetPrice, userId }),
     }),
 };
+
+// Delivery Tracking API
+export const deliveryAPI = {
+  // Get comprehensive tracking info for an order
+  track: (orderId) =>
+    apiCall(`/delivery/track/${orderId}`),
+
+  // Get all delivery stations
+  getStations: () =>
+    apiCall('/delivery/stations'),
+
+  // Get stations by type or city
+  getStationsByFilter: (type, city) => {
+    const params = new URLSearchParams();
+    if (type) params.append('type', type);
+    if (city) params.append('city', city);
+    return apiCall(`/delivery/stations?${params.toString()}`);
+  },
+
+  // Subscribe to real-time location updates (polling-based)
+  subscribeToLocation: (orderId, callback, interval = 10000) => {
+    let isSubscribed = true;
+    
+    const poll = async () => {
+      if (!isSubscribed) return;
+      
+      try {
+        const data = await apiCall(`/delivery/track/${orderId}`);
+        callback(data);
+      } catch (error) {
+        console.error('Tracking poll error:', error);
+      }
+      
+      if (isSubscribed) {
+        setTimeout(poll, interval);
+      }
+    };
+    
+    poll();
+    
+    // Return unsubscribe function
+    return () => {
+      isSubscribed = false;
+    };
+  },
+};

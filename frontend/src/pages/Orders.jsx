@@ -32,43 +32,61 @@ const Orders = () => {
     }
   };
 
+  // Map old statuses to simplified ones
+  const getSimplifiedStatus = (status) => {
+    const statusMap = {
+      'order_placed': 'ordered',
+      'fulfillment_processing': 'shipped',
+      'regional_transit': 'shipped',
+      'local_station': 'shipped',
+      'waiting_for_agent': 'shipped',
+      'agent_assigned': 'shipped',
+      'picked_up': 'shipped',
+      'shipped': 'shipped',
+      'on_the_way': 'out_for_delivery',
+      'out_for_delivery': 'out_for_delivery',
+      'delivered': 'delivered',
+      'cancelled': 'cancelled'
+    };
+    return statusMap[status] || 'ordered';
+  };
+
+  const getStatusLabel = (status) => {
+    const simplified = getSimplifiedStatus(status);
+    switch (simplified) {
+      case 'delivered': return 'Delivered';
+      case 'out_for_delivery': return 'Out for Delivery';
+      case 'shipped': return 'Shipped';
+      case 'ordered': return 'Order Placed';
+      case 'cancelled': return 'Cancelled';
+      default: return 'Processing';
+    }
+  };
+
   const getStatusColor = (status) => {
-    switch (status) {
+    const simplified = getSimplifiedStatus(status);
+    switch (simplified) {
       case 'delivered':
-        return 'text-green-600';
-      case 'on_the_way':
-        return 'text-blue-600';
-      case 'picked_up':
-        return 'text-purple-600';
-      case 'agent_assigned':
-        return 'text-orange-600';
-      case 'waiting_for_agent':
-        return 'text-yellow-600';
-      case 'local_station':
-        return 'text-indigo-600';
-      case 'regional_transit':
-        return 'text-cyan-600';
-      case 'fulfillment_processing':
-        return 'text-amber-600';
-      case 'order_placed':
-        return 'text-gray-600';
+        return 'text-green-600 bg-green-50';
+      case 'out_for_delivery':
+        return 'text-blue-600 bg-blue-50';
+      case 'shipped':
+        return 'text-orange-600 bg-orange-50';
+      case 'ordered':
+        return 'text-gray-600 bg-gray-50';
       case 'cancelled':
-        return 'text-red-600';
+        return 'text-red-600 bg-red-50';
       default:
         return 'text-muted-foreground';
     }
   };
 
   const getEstimatedDelivery = (order) => {
-    if (order.status === 'delivered') return null;
+    const simplified = getSimplifiedStatus(order.status);
+    if (simplified === 'delivered' || simplified === 'cancelled') return null;
     const orderDate = order.createdAt ? new Date(order.createdAt) : new Date();
-    const deliveryDate = new Date(orderDate.getTime() + 5 * 24 * 60 * 60 * 1000);
-    return deliveryDate.toLocaleDateString();
-  };
-
-  const handleViewOnMap = (orderId) => {
-    // For now, show an alert - in a real app this would open a map view
-    alert(`Map tracking for order ${orderId} will be available soon! This would show the real-time location of your package.`);
+    const deliveryDate = new Date(orderDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+    return deliveryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
   if (!token) {
@@ -125,19 +143,20 @@ const Orders = () => {
                   )}
                 </div>
                 <div className="mt-2 md:mt-0 flex flex-col md:flex-row items-start md:items-center gap-2">
-                  <span className={`font-semibold ${getStatusColor(order.status)}`}>
-                    {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                  <span className={`font-semibold px-3 py-1 rounded-full text-sm ${getStatusColor(order.status)}`}>
+                    {getStatusLabel(order.status)}
                   </span>
-                  {(['agent_assigned', 'picked_up', 'on_the_way', 'delivered'].includes(order.status)) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleViewOnMap(orderNumber)}
-                      className="flex items-center gap-1 text-xs"
-                    >
-                      <MapPin className="w-3 h-3" />
-                      Track
-                    </Button>
+                  {getSimplifiedStatus(order.status) === 'out_for_delivery' && (
+                    <Link to={`/orders/${orderId}`}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 text-xs"
+                      >
+                        <MapPin className="w-3 h-3" />
+                        Track Live
+                      </Button>
+                    </Link>
                   )}
                 </div>
               </div>
