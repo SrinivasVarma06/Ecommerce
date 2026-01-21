@@ -110,6 +110,7 @@ function createAdminRouter(usersCollection, ordersCollection, productsCollection
   });
 
         // Approve a return request and remove item from order
+        // Uses bulkWrite for atomic operations (all succeed or all fail)
         router.put('/orders/:orderId/returns/:productId/approve', requireAdmin, async (req, res) => {
           try {
             const { orderId, productId } = req.params;
@@ -125,30 +126,63 @@ function createAdminRouter(usersCollection, ordersCollection, productsCollection
             if (returnIdx === -1) {
               return res.status(400).json({ message: 'Return request not found for this item' });
             }
+            // Check if already approved
+            if (order.returns[returnIdx].status === 'approved') {
+              return res.status(400).json({ message: 'Return already approved' });
+            }
             // Find the item to be returned
             const item = order.items ? order.items.find(i => i.productId === productId) : null;
-            const itemPrice = item ? (item.price * item.quantity) : 0;
-            // Update return status to approved
-            await ordersCollection.updateOne(
-              { _id: new ObjectId(orderId), 'returns.productId': productId },
-              { $set: { 'returns.$.status': 'approved', 'returns.$.approvedAt': new Date() } }
-            );
-            // Remove item from order
-            await ordersCollection.updateOne(
-              { _id: new ObjectId(orderId) },
-              { $pull: { items: { productId } } }
-            );
-            // Subtract item price from order totalAmount
-            if (itemPrice > 0) {
-              await ordersCollection.updateOne(
-                { _id: new ObjectId(orderId) },
-                { $inc: { totalAmount: -itemPrice } }
+            if (!item) {
+              return res.status(400).json({ message: 'Item not found in order' });
+            }
+            const itemPrice = item.price * item.quantity;
+            const returnQuantity = item.quantity;
+
+            // ATOMIC OPERATION: Use bulkWrite for order updates
+            // This ensures all order changes happen together
+            const orderUpdateResult = await ordersCollection.bulkWrite([
+              // Operation 1: Update return status to approved
+              {
+                updateOne: {
+                  filter: { _id: new ObjectId(orderId), 'returns.productId': productId },
+                  update: { $set: { 'returns.$.status': 'approved', 'returns.$.approvedAt': new Date() } }
+                }
+              },
+              // Operation 2: Remove item from order
+              {
+                updateOne: {
+                  filter: { _id: new ObjectId(orderId) },
+                  update: { $pull: { items: { productId } } }
+                }
+              },
+              // Operation 3: Subtract item price from order total
+              {
+                updateOne: {
+                  filter: { _id: new ObjectId(orderId) },
+                  update: { $inc: { totalAmount: -itemPrice } }
+                }
+              }
+            ], { ordered: true }); // ordered: true means stop on first failure
+
+            // Restore stock to the product (separate collection, but critical)
+            if (ObjectId.isValid(productId)) {
+              await productsCollection.updateOne(
+                { _id: new ObjectId(productId) },
+                { $inc: { stock: returnQuantity } }
               );
             }
-            res.json({ message: 'Return approved, item removed, and analytics updated.' });
+
+            res.json({ 
+              message: 'Return approved successfully',
+              details: {
+                itemRemoved: item.name,
+                quantityRestored: returnQuantity,
+                amountRefunded: itemPrice
+              }
+            });
           } catch (err) {
-            console.error(err);
-            res.status(500).json({ message: 'Server error' });
+            console.error('Return approval error:', err);
+            res.status(500).json({ message: 'Server error during return approval. Please try again.' });
           }
         });
 

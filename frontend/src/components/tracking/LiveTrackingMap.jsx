@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-// Leaflet CDN URLs (100% FREE - No API key needed!)
 const LEAFLET_CSS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
 const LEAFLET_JS = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
 
@@ -28,20 +27,17 @@ const LiveTrackingMap = ({
   const customerMarkerRef = useRef(null);
   const routeLineRef = useRef(null);
 
-  // Load Leaflet library dynamically
   useEffect(() => {
     if (window.L) {
       setMapLoaded(true);
       return;
     }
 
-    // Load CSS
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = LEAFLET_CSS;
     document.head.appendChild(link);
 
-    // Load JS
     const script = document.createElement('script');
     script.src = LEAFLET_JS;
     script.async = true;
@@ -79,7 +75,6 @@ const LiveTrackingMap = ({
       agentLng || customerLng || 74.9353
     ];
 
-    // Create map if not exists
     if (!leafletMapRef.current) {
       leafletMapRef.current = window.L.map(mapRef.current, {
         center: defaultCenter,

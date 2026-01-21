@@ -57,18 +57,36 @@ function createCartRouter(usersCollection, productsCollection) {
       const product = await productsCollection.findOne({ _id: new ObjectId(productId) });
       if (!product) return res.status(404).json({ message: 'Product not found' });
 
+      // Check if product is in stock
+      if (product.stock <= 0) {
+        return res.status(400).json({ message: 'Product is out of stock' });
+      }
+
       // Check if item already in cart
       const user = await usersCollection.findOne({ _id: new ObjectId(req.user.id) });
       const cart = user.cart || [];
       const existingItem = cart.find(item => item.productId === productId);
 
       if (existingItem) {
+        // Check if adding more would exceed available stock
+        const newTotalQty = existingItem.quantity + qty;
+        if (newTotalQty > product.stock) {
+          return res.status(400).json({ 
+            message: `Cannot add ${qty} more. Only ${product.stock - existingItem.quantity} more available.` 
+          });
+        }
         // Update quantity
         await usersCollection.updateOne(
           { _id: new ObjectId(req.user.id), 'cart.productId': productId },
           { $inc: { 'cart.$.quantity': qty } }
         );
       } else {
+        // Check if requested quantity is available
+        if (qty > product.stock) {
+          return res.status(400).json({ 
+            message: `Only ${product.stock} items available in stock.` 
+          });
+        }
         // Add new item
         await usersCollection.updateOne(
           { _id: new ObjectId(req.user.id) },
@@ -91,6 +109,17 @@ function createCartRouter(usersCollection, productsCollection) {
 
       const qty = parseInt(quantity);
       if (qty < 1) return res.status(400).json({ message: 'Quantity must be at least 1' });
+
+      // Check product stock before updating
+      const product = await productsCollection.findOne({ _id: new ObjectId(itemId) });
+      if (!product) {
+        return res.status(404).json({ message: 'Product not found' });
+      }
+      if (qty > product.stock) {
+        return res.status(400).json({ 
+          message: `Only ${product.stock} items available in stock.` 
+        });
+      }
 
       const result = await usersCollection.updateOne(
         { _id: new ObjectId(req.user.id), 'cart.productId': itemId },

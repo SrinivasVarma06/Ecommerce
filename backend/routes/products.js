@@ -69,6 +69,12 @@ function createProductsRouter(productsCollection) {
     try {
       const { name, description, price, image, category, stock } = req.body;
       if (!name || !price) return res.status(400).json({ message: 'Name and price are required' });
+      if (stock === undefined || stock === null || stock === '') {
+        return res.status(400).json({ message: 'Stock quantity is required' });
+      }
+      if (Number(stock) < 0) {
+        return res.status(400).json({ message: 'Stock cannot be negative' });
+      }
       const newProduct = {
         name,
         description,

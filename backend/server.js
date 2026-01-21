@@ -36,8 +36,6 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
-
-// Serve static files from the tools directory (delivery-management.html etc.)
 app.use('/tools', express.static('../tools'));
 
 const PORT=process.env.PORT || 5000;
@@ -107,26 +105,12 @@ MongoClient.connect(MONGODB_URI).then(client => {
     app.use('/api/products', createProductsRouter(productsCollection));
     app.use('/api/admin/products', authMiddleware, adminMiddleware, createProductsRouter(productsCollection));
     app.use('/api/admin', authMiddleware, adminMiddleware, createAdminRouter(usersCollection, ordersCollection, productsCollection));
-    
-    // Wishlist routes (requires auth)
     app.use('/api/wishlist', authMiddleware, createWishlistRouter(usersCollection, productsCollection));
-    
-    // Cart routes (requires auth)
     app.use('/api/cart', authMiddleware, createCartRouter(usersCollection, productsCollection));
-    
-    // Orders routes (requires auth)
     app.use('/api/orders', authMiddleware, createOrdersRouter(usersCollection, ordersCollection, productsCollection));
-    
-    // Delivery routes (for agents and tracking)
     app.use('/api/delivery', createDeliveryRouter(ordersCollection, deliveryAgentsCollection, deliveryStationsCollection));
-    
-    // Gamification routes
     app.use('/api/gamification', authMiddleware, createGamificationRouter(usersCollection, gamificationCollection));
-    
-    // Price tracking routes
     app.use('/api/price-tracking', createPriceTrackingRouter(productsCollection, priceHistoryCollection));
-    
-    // Reviews routes (reviews endpoint requires auth for POST)
     app.use('/api/products', createReviewsRouter(productsCollection, reviewsCollection,authMiddleware));
 
     app.listen(PORT, () => {
